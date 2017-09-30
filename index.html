@@ -1,0 +1,161 @@
+<html>
+	<head>
+		<script src="https://aframe.io/releases/0.7.0/aframe.min.js"></script>
+		<script src="component.js"></script>
+		<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+		<script>
+		
+		$(document).ready(function() {
+			function getRandomString(size) {
+				var emptyString = "";
+				var alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+				while (emptyString.length < size) {
+				  emptyString += alphabet[Math.floor(Math.random() * alphabet.length)];
+				} 
+				return emptyString;
+			}
+		
+			function getRandomIntInclusive(min, max) {
+				min = Math.ceil(min);
+				max = Math.floor(max);
+				return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive 
+			}
+			
+			function getRandomColor() {
+				var letters = '0123456789ABCDEF';
+				var color = '#';
+				for (var i = 0; i < 6; i++) {
+					color += letters[Math.floor(Math.random() * 16)];
+				}
+				return color;
+			}
+
+		
+			function boxes() {
+				value = getRandomString(1);
+				positionX = getRandomIntInclusive(-2,2);
+				positionY = getRandomIntInclusive(-2,2);
+				positionZ = getRandomIntInclusive(-2,2);
+				postion = positionX + " " + positionY + " " + positionZ;
+				angles = [0,30,45,60,90];
+				angleX = getRandomIntInclusive(0,4);
+				angleY = getRandomIntInclusive(0,4);
+				angleZ = getRandomIntInclusive(0,4);
+				angle = angles[angleX] + " " + angles[angleY] + " " + angles[angleZ];
+				color = getRandomColor();
+				console.log("Boxes");
+				//html = '<a-box src="a.jpg" value="a" cursor-listener position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>';
+				id = + new Date();
+				html = '<a-box id="' + id + '" ';
+				html += 'src="' + 'alphabets/' + value + '.jpg" width="1" height="1" ';
+				html += 'value="' + value + '" ';
+				html += 'cursor-listener ';
+				html += 'position="' + positionX + ' ' + positionY + ' ' + positionZ + '" ';
+				html += 'rotation="' + angleX + ' ' + angleY + ' ' + angleZ + '" ';
+				html += 'color="' + color + '">';
+				html += '</a-box>';
+				console.log(html);
+				$("#myScene").append(html);
+				setTimeout(function() { $("#" + id).remove() },15000);
+			}
+			
+			words = [];
+			currentWord = {};
+			currentBox = 0;
+			points = 0;
+			AFRAME.registerComponent('cursor-listener', {
+    				init: function () {
+         				this.el.addEventListener('click', function (evt) {
+	        				// console.log('I was clicked at: ', evt.detail.intersection.point);					
+							if(currentBox < 3) {
+								val = evt.currentTarget.getAttribute("value");
+								$("#alpha-box" + currentBox).attr("value", val);
+								currentBox++;	
+								evt.currentTarget.parentNode.removeChild(evt.currentTarget);
+								boxes();
+							}	
+      					});
+    				}
+  			});
+			
+			
+			$(".alpha").click(function() {
+				$(this).attr("value","");
+				if(currentBox > -1) {
+					currentBox--;
+				}	
+			});
+			
+			$("#submit").click(function() {
+				if($("#alpha-box0").attr("value")) {
+					word = $("#alpha-box0").attr("value")
+				} else if($("#alpha-box1").attr("value")) {
+					word += $("#alpha-box1").attr("value")
+				} else if($("#alpha-box2").attr("value")) {
+					word += $("#alpha-box2").attr("value")
+				}
+				
+				console.log("submit");
+				console.log(word);
+				if(word.length != 3) {
+					$.ajax({
+					url: "https://api.datamuse.com/words?ml=" + word,
+					success: function(r) {
+						if(r == "[]") {
+							
+						} else {
+							points += 10;
+							$("#points").html(points);
+							$("#alpha-box0").attr("value","");
+							$("#alpha-box1").attr("value","");
+							$("#alpha-box2").attr("value","");
+						}
+					}
+					});
+				}
+			});
+			
+			
+			setInterval(boxes,6000);
+		});
+		</script>
+	</head>
+	<body>
+	<div id="point">
+		<!-- <p id="alpha-box0" style="border: 1px solid black; width:50px; height:50px; display:inline-block;">
+		</p>
+		<p id="alpha-box1" style="border: 1px solid black; width:50px; height:50px; display:inline-block;">
+		</p>
+		<p id="alpha-box2" style="border: 1px solid black; width:50px; height:50px; display:inline-block;">
+		</p> -->
+		<div class="row">
+			<div class="col-md-2">
+				<input type="button" class="btn btn-success alpha" id="alpha-box0" />
+			</div>
+			<div class="col-md-2">		
+				<input type="button" class="btn btn-success alpha" id="alpha-box1" />
+			</div>
+			<div class="col-md-2">
+				<input type="button" class="btn btn-success alpha" id="alpha-box2" />
+			</div>
+			<div class="col-md-2">
+				<input id="submit" type="button" value="Submit" class="btn btn-primary" />
+			</div>
+			<div class="col-md-2">
+				<h3 id="points">0</h3> points
+			</div>
+		</div>
+	</div>
+	<a-scene id="myScene">
+		<a-sky src="sky.jpg"></a-sky>
+		<!-- <a-box src="a.jpg" cursor-listener position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box> -->
+		<a-camera>
+        		<a-cursor intersection-spawn="event: click; mixin: voxel"></a-cursor>
+		</a-camera>
+		<!-- <a-entity id="box" src="a.jpg" cursor-listener geometry="primitive: box" material="color: blue" position="-2 2.2 -1.5"></a-entity> -->
+	</a-scene>
+ 	</body>
+</html>
